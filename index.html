@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rwanda Hospital Booking</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Doctor Selection Page -->
+    <div id="doctorSelection" class="page active">
+        <header>
+            <h1>🇷🇼 Rwanda Medical Connect</h1>
+            <p>Book appointments with top Rwandan doctors - No account needed!</p>
+        </header>
+
+        <div class="container">
+            <h2>Available Doctors</h2>
+            <div id="doctorsList" class="doctors-grid">
+                <!-- Doctors will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Details Page -->
+    <div id="patientDetails" class="page">
+        <header>
+            <h1>Patient Information</h1>
+            <p>Please provide your basic details</p>
+        </header>
+
+        <div class="container">
+            <form id="patientForm" class="form">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sex">Sex *</label>
+                    <select id="sex" name="sex" required>
+                        <option value="">Select</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="age">Age *</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="goBackToDoctors()">Back</button>
+                    <button type="submit" class="btn-primary">Continue to Description</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Description Page -->
+    <div id="descriptionPage" class="page">
+        <header>
+            <h1>Describe Your Medical Concern</h1>
+            <p>You can provide details in writing, by voice, or both</p>
+        </header>
+
+        <div class="container">
+            <form id="descriptionForm" class="form">
+                <div class="form-group">
+                    <label for="writtenDescription">Written Description</label>
+                    <textarea id="writtenDescription" name="writtenDescription" 
+                              placeholder="Please describe your symptoms, concerns, or medical history..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Voice Recording (Optional)</label>
+                    <div class="recording-section">
+                        <button type="button" id="startRecording" class="btn-secondary">Start Recording</button>
+                        <button type="button" id="stopRecording" class="btn-secondary" disabled>Stop Recording</button>
+                        <audio id="audioPreview" controls style="display: none;"></audio>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="goBackToPatientDetails()">Back</button>
+                    <button type="submit" class="btn-primary">Submit Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Page -->
+    <div id="confirmationPage" class="page">
+        <header>
+            <h1>Appointment Request Submitted!</h1>
+        </header>
+
+        <div class="container confirmation">
+            <div class="success-icon">✓</div>
+            <h2>Thank You for Your Booking</h2>
+            <p>Your appointment request has been sent to the doctor. You will receive an email confirmation with your appointment details once the doctor confirms your booking.</p>
+            <button onclick="startNewBooking()" class="btn-primary">Book Another Appointment</button>
+        </div>
+    </div>
+
+    <!-- Doctor Login Page -->
+    <div id="doctorLogin" class="page">
+        <header>
+            <h1>Doctor Login</h1>
+            <p>Access your medical dashboard</p>
+        </header>
+
+        <div class="container">
+            <form id="loginForm" class="form">
+                <div class="form-group">
+                    <label for="doctorEmail">Email</label>
+                    <input type="email" id="doctorEmail" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="doctorPassword">Password</label>
+                    <input type="password" id="doctorPassword" name="password" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Doctor Dashboard -->
+    <div id="doctorDashboard" class="page">
+        <header>
+            <h1>Doctor Dashboard</h1>
+            <div class="doctor-info">
+                <span id="doctorWelcome">Welcome, Dr.</span>
+                <button onclick="logout()" class="btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('appRequests')">App Requests</button>
+                <button class="tab-btn" onclick="showTab('appointments')">Appointments</button>
+            </div>
+
+            <!-- App Requests Tab -->
+            <div id="appRequests" class="tab-content active">
+                <h2>New Appointment Requests</h2>
+                <div id="requestsList" class="requests-grid">
+                    <!-- Requests will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Appointments Tab -->
+            <div id="appointments" class="tab-content">
+                <h2>Confirmed Appointments</h2>
+                <div id="appointmentsList" class="appointments-grid">
+                    <!-- Appointments will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
