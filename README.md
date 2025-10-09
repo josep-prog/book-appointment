@@ -1,3 +1,6 @@
+**DemoVideo: [https://youtu.be/gMpyJmAQ4IU](https://youtu.be/gMpyJmAQ4IU)**   
+**Github repository: [https://github.com/josep-prog/IGIHE-technical-interview\_JosephNishimwe.git](https://github.com/josep-prog/IGIHE-technical-interview_JosephNishimwe.git)** 
+
 **Patient Side:**
 
 As a patient shows up on the site, they will be presented with a list of Rwandan doctors available. The patient is given an opportunity to select any doctor he or she wishes to meet. Once they choose the doctor, they will visit a page where they will be required to enter their information such as name, sex, age, email and contact number. After that, they will be directed to the description page where they will be allowed to describe their health issue by writing or recording their voice. After this, they shoot the button of Submit Appointment. Upon the doctor confirming the appointment, the patient will get a email with all the details- the name of the doctor, the time of the appointment and the Google Meet link to use in the video call.
@@ -21,5 +24,5 @@ Each physician will log-in with their email and passwords to access his or her d
 
 3. **Running the project**
 
-* Npm start
+* npm start
 
