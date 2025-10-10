@@ -26,3 +26,4 @@ Each physician will log-in with their email and passwords to access his or her d
 
 * npm start
 
+**Doctor-page** : http://localhost:3000/?doctor=login
