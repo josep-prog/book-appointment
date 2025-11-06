@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rwanda Hospital Booking</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <!-- Doctor Selection Page -->
@@ -21,6 +21,16 @@
                 <!-- Doctors will be loaded here -->
             </div>
         </div>
+        
+        <!-- Floating Doctor Login Button -->
+        <a href="?doctor=login" class="doctor-login-float" title="Doctor Login">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+                <path d="M16 11h6m-3-3v6"></path>
+            </svg>
+            <span>Doctor Login</span>
+        </a>
     </div>
 
     <!-- Patient Details Page -->
@@ -90,6 +100,9 @@
                     <div class="recording-section">
                         <button type="button" id="startRecording" class="btn-secondary">Start Recording</button>
                         <button type="button" id="stopRecording" class="btn-secondary" disabled>Stop Recording</button>
+                        <div id="recordingTimer" style="display: none; margin: 10px 0; font-size: 18px; font-weight: bold; color: #e74c3c;">
+                            🔴 Recording: <span id="timerDisplay">00:00</span>
+                        </div>
                         <audio id="audioPreview" controls style="display: none;"></audio>
                     </div>
                 </div>
@@ -152,8 +165,8 @@
 
         <div class="container">
             <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('appRequests')">App Requests</button>
-                <button class="tab-btn" onclick="showTab('appointments')">Appointments</button>
+                <button class="tab-btn active" onclick="showTab('appRequests', event)">App Requests</button>
+                <button class="tab-btn" onclick="showTab('appointments', event)">Appointments</button>
             </div>
 
             <!-- App Requests Tab -->
@@ -174,6 +187,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="./script.js"></script>
 </body>
 </html>

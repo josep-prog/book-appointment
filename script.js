@@ -6,6 +6,8 @@ let audioChunks = [];
 let currentAppointment = null;
 let doctors = [];
 let doctorToken = null;
+let recordingTimer = null;
+let recordingStartTime = null;
 
 // API Configuration
 const API_BASE = '';
@@ -152,6 +154,9 @@ async function startRecording() {
             document.getElementById('audioPreview').src = audioUrl;
             document.getElementById('audioPreview').style.display = 'block';
             
+            // Stop and hide timer
+            stopTimer();
+            
             // Store audio blob for submission
             currentAppointment = {
                 ...currentAppointment,
@@ -163,9 +168,37 @@ async function startRecording() {
         mediaRecorder.start();
         document.getElementById('startRecording').disabled = true;
         document.getElementById('stopRecording').disabled = false;
+        
+        // Start timer
+        startTimer();
     } catch (error) {
         alert('Error accessing microphone: ' + error.message);
     }
+}
+
+// Start recording timer
+function startTimer() {
+    recordingStartTime = Date.now();
+    document.getElementById('recordingTimer').style.display = 'block';
+    
+    recordingTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        
+        document.getElementById('timerDisplay').textContent = 
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }, 1000);
+}
+
+// Stop recording timer
+function stopTimer() {
+    if (recordingTimer) {
+        clearInterval(recordingTimer);
+        recordingTimer = null;
+    }
+    document.getElementById('recordingTimer').style.display = 'none';
+    document.getElementById('timerDisplay').textContent = '00:00';
 }
 
 // Stop voice recording
@@ -218,10 +251,28 @@ async function submitAppointment() {
     submitButton.textContent = 'Submitting...';
     
     try {
-        const writtenDescription = document.getElementById('writtenDescription').value;
+        const writtenDescription = document.getElementById('writtenDescription').value.trim();
         
-        if (!writtenDescription && !currentAppointment.audioBlob) {
+        // Check if currentAppointment exists, if not initialize it
+        if (!currentAppointment) {
+            currentAppointment = {};
+        }
+        
+        // Validate that at least one input method is provided
+        const hasAudio = currentAppointment.audioBlob && currentAppointment.audioBlob instanceof Blob;
+        const hasText = writtenDescription && writtenDescription.length > 0;
+        
+        if (!hasText && !hasAudio) {
             throw new Error('Please provide either a written description or voice recording.');
+        }
+        
+        // Validate required data
+        if (!currentDoctor || !currentDoctor.id) {
+            throw new Error('Doctor information is missing. Please start over.');
+        }
+        
+        if (!currentPatient) {
+            throw new Error('Patient information is missing. Please go back and fill in your details.');
         }
         
         const formData = new FormData();
@@ -229,26 +280,43 @@ async function submitAppointment() {
         formData.append('patientData', JSON.stringify(currentPatient));
         formData.append('writtenDescription', writtenDescription);
         
-        if (currentAppointment.audioBlob) {
+        if (hasAudio) {
             formData.append('audioFile', currentAppointment.audioBlob, 'recording.wav');
         }
         
+        console.log('Submitting appointment to server...');
         const response = await fetch('/api/appointments', {
             method: 'POST',
             body: formData
         });
         
+        console.log('Server response status:', response.status);
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to submit appointment');
+            let errorMessage = 'Failed to submit appointment';
+            try {
+                const error = await response.json();
+                errorMessage = error.error || error.details || errorMessage;
+                console.error('Server error response:', error);
+            } catch (parseError) {
+                console.error('Could not parse error response:', parseError);
+            }
+            throw new Error(errorMessage);
         }
         
         const result = await response.json();
+        console.log('Appointment created successfully:', result.appointmentId);
         currentAppointment.id = result.appointmentId;
         
         showPage('confirmationPage');
     } catch (error) {
         console.error('Error submitting appointment:', error);
+        console.error('Error details:', {
+            hasDoctor: !!currentDoctor,
+            hasPatient: !!currentPatient,
+            hasText: !!writtenDescription && writtenDescription.length > 0,
+            hasAudio: !!(currentAppointment && currentAppointment.audioBlob)
+        });
         alert('Error submitting appointment: ' + error.message);
     } finally {
         submitButton.disabled = false;
@@ -421,7 +489,7 @@ function createAppointmentCard(appointment) {
         </div>
         
         <div class="button-group mt-2">
-            <a href="${appointment.google_meet_link || 'https://meet.google.com/kpe-qfki-pdb'}" target="_blank" class="btn-primary">Join Google Meet</a>
+            <a href="${appointment.google_meet_link || 'https://meet.google.com/kpe-qfki-pdb'}" target="_blank" class="btn-primary">Join Video Call</a>
             <button onclick="sendReminder('${appointment.id}')" class="btn-secondary">Send Reminder</button>
         </div>
     `;
@@ -466,7 +534,7 @@ function showPage(pageId) {
     document.getElementById(pageId).classList.add('active');
 }
 
-function showTab(tabId) {
+function showTab(tabId, event) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -475,7 +543,20 @@ function showTab(tabId) {
     });
     
     document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
+    
+    // Only update button active state if called from a click event
+    if (event && event.target) {
+        event.target.classList.add('active');
+    } else {
+        // Fallback: find and activate the correct button by tabId
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => {
+            const onclickAttr = btn.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes(`'${tabId}'`)) {
+                btn.classList.add('active');
+            }
+        });
+    }
 }
 
 function goBackToDoctors() {
@@ -490,9 +571,33 @@ function startNewBooking() {
     currentDoctor = null;
     currentPatient = null;
     currentAppointment = null;
+    audioChunks = [];
+    
+    // Reset forms
     document.getElementById('patientForm').reset();
     document.getElementById('descriptionForm').reset();
+    
+    // Reset recording UI
     document.getElementById('audioPreview').style.display = 'none';
+    document.getElementById('audioPreview').src = '';
+    document.getElementById('startRecording').disabled = false;
+    document.getElementById('stopRecording').disabled = true;
+    
+    // Stop and reset timer
+    if (recordingTimer) {
+        clearInterval(recordingTimer);
+        recordingTimer = null;
+    }
+    document.getElementById('recordingTimer').style.display = 'none';
+    document.getElementById('timerDisplay').textContent = '00:00';
+    
+    // Stop any active media recorder
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+    mediaRecorder = null;
+    
     showPage('doctorSelection');
 }
 

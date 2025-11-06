@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Consultation - Rwanda Medical Connect</title>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        .video-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .video-call-wrapper {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .call-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .call-header h2 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .call-status {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        #videoGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            min-height: 400px;
+        }
+
+        .video-element {
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-element video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-label {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .call-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn.camera {
+            background: #3498db;
+            color: white;
+        }
+
+        .control-btn.microphone {
+            background: #27ae60;
+            color: white;
+        }
+
+        .control-btn.end-call {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #7f8c8d;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c00;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .waiting-room {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .waiting-room .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🇷🇼 Rwanda Medical Connect</h1>
+        <p>Virtual Medical Consultation</p>
+    </header>
+
+    <div class="video-container">
+        <div class="video-call-wrapper">
+            <div class="call-header">
+                <h2 id="callTitle">Connecting to Video Call...</h2>
+                <p class="call-status" id="callStatus">Please wait</p>
+            </div>
+
+            <div id="videoGrid"></div>
+
+            <div class="call-controls">
+                <button class="control-btn camera" id="toggleCamera" disabled>
+                    📹 Toggle Camera
+                </button>
+                <button class="control-btn microphone" id="toggleMicrophone" disabled>
+                    🎤 Toggle Microphone
+                </button>
+                <button class="control-btn end-call" id="endCall" disabled>
+                    📞 End Call
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@stream-io/video-client@latest/dist/index.umd.js"></script>
+    <script>
+        // Extract call ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const callId = urlParams.get('id');
+        const userRole = urlParams.get('role') || 'guest';
+        const userName = urlParams.get('name') || 'User';
+
+        let streamVideoClient = null;
+        let call = null;
+        let isCameraOn = true;
+        let isMicrophoneOn = true;
+
+        async function initializeCall() {
+            try {
+                if (!callId) {
+                    throw new Error('No call ID provided in URL');
+                }
+
+                document.getElementById('callStatus').textContent = 'Initializing...';
+
+                // Generate user ID
+                const userId = `${userRole}-${callId}-${Date.now()}`;
+
+                // Get Stream.io token from backend
+                const tokenResponse = await fetch('/api/stream/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId, 
+                        userName,
+                        role: userRole 
+                    })
+                });
+
+                if (!tokenResponse.ok) {
+                    throw new Error('Failed to get video call token. Stream.io may not be configured.');
+                }
+
+                const { token, apiKey } = await tokenResponse.json();
+
+                // Initialize Stream Video Client
+                const { StreamVideoClient } = window.StreamVideo;
+                streamVideoClient = new StreamVideoClient({
+                    apiKey,
+                    user: { id: userId, name: userName },
+                    token
+                });
+
+                // Join the call without requiring permission
+                call = streamVideoClient.call('default', callId);
+                await call.join({ 
+                    create: false,
+                    ring: false,
+                    notify: false
+                });
+
+                document.getElementById('callTitle').textContent = `Video Consultation: ${userName}`;
+                document.getElementById('callStatus').textContent = 'Connected';
+
+                // Enable controls
+                document.getElementById('toggleCamera').disabled = false;
+                document.getElementById('toggleMicrophone').disabled = false;
+                document.getElementById('endCall').disabled = false;
+
+                // Set up video elements
+                setupVideoElements();
+
+                // Listen for participants
+                call.on('participant.joined', () => {
+                    console.log('Participant joined');
+                    setupVideoElements();
+                });
+
+                call.on('participant.left', () => {
+                    console.log('Participant left');
+                    setupVideoElements();
+                });
+
+            } catch (error) {
+                console.error('Error initializing call:', error);
+                document.getElementById('videoGrid').innerHTML = `
+                    <div class="error-message">
+                        <h3>Unable to Connect</h3>
+                        <p>${error.message}</p>
+                        <p>Please ensure Stream.io is properly configured or contact support.</p>
+                        <button onclick="window.close()" class="control-btn end-call">Close Window</button>
+                    </div>
+                `;
+                document.getElementById('callStatus').textContent = 'Connection Failed';
+            }
+        }
+
+        function setupVideoElements() {
+            const videoGrid = document.getElementById('videoGrid');
+            videoGrid.innerHTML = '';
+
+            if (!call) return;
+
+            // Add local video
+            const localVideo = document.createElement('div');
+            localVideo.className = 'video-element';
+            localVideo.innerHTML = `
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="video-label">You</div>
+            `;
+            videoGrid.appendChild(localVideo);
+
+            // Add remote videos
+            call.state.participants.forEach((participant, index) => {
+                if (participant.isLocalParticipant) return;
+
+                const remoteVideo = document.createElement('div');
+                remoteVideo.className = 'video-element';
+                remoteVideo.innerHTML = `
+                    <video id="remote-${index}" autoplay playsinline></video>
+                    <div class="video-label">${participant.name || 'Participant'}</div>
+                `;
+                videoGrid.appendChild(remoteVideo);
+            });
+        }
+
+        // Control button handlers
+        document.getElementById('toggleCamera').addEventListener('click', async () => {
+            if (!call) return;
+            
+            try {
+                if (isCameraOn) {
+                    await call.camera.disable();
+                } else {
+                    await call.camera.enable();
+                }
+                isCameraOn = !isCameraOn;
+                document.getElementById('toggleCamera').textContent = 
+                    isCameraOn ? '📹 Turn Camera Off' : '📹 Turn Camera On';
+            } catch (error) {
+                console.error('Error toggling camera:', error);
+                alert('Failed to toggle camera');
+            }
+        });
+
+        document.getElementById('toggleMicrophone').addEventListener('click', async () => {
+            if (!call) return;
+            
+            try {
+                if (isMicrophoneOn) {
+                    await call.microphone.disable();
+                } else {
+                    await call.microphone.enable();
+                }
+                isMicrophoneOn = !isMicrophoneOn;
+                document.getElementById('toggleMicrophone').textContent = 
+                    isMicrophoneOn ? '🎤 Mute' : '🎤 Unmute';
+            } catch (error) {
+                console.error('Error toggling microphone:', error);
+                alert('Failed to toggle microphone');
+            }
+        });
+
+        document.getElementById('endCall').addEventListener('click', async () => {
+            if (!call) return;
+            
+            try {
+                await call.leave();
+                if (streamVideoClient) {
+                    await streamVideoClient.disconnectUser();
+                }
+                document.getElementById('videoGrid').innerHTML = `
+                    <div class="waiting-room">
+                        <div class="icon">👋</div>
+                        <h2>Call Ended</h2>
+                        <p>Thank you for using Rwanda Medical Connect</p>
+                        <button onclick="window.close()" class="control-btn end-call">Close Window</button>
+                    </div>
+                `;
+                document.getElementById('callStatus').textContent = 'Disconnected';
+            } catch (error) {
+                console.error('Error ending call:', error);
+                window.close();
+            }
+        });
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', initializeCall);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', async () => {
+            if (call) {
+                await call.leave();
+            }
+            if (streamVideoClient) {
+                await streamVideoClient.disconnectUser();
+            }
+        });
+    </script>
+</body>
+</html>
