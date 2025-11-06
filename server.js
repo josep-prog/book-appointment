@@ -562,12 +562,12 @@ async function sendPatientConfirmationEmail(email, patientName, appointmentId) {
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: ' Appointment Request Received - Rwanda Medical Connect',
+        subject: ' Appointment Request Received - iVUZE',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #2c3e50;">Appointment Request Received</h2>
                 <p>Dear ${patientName},</p>
-                <p>Your appointment request has been successfully submitted to Rwanda Medical Connect.</p>
+                <p>Your appointment request has been successfully submitted to iVUZE.</p>
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <h3 style="color: #27ae60;">What's Next?</h3>
                     <ul>
@@ -577,7 +577,7 @@ async function sendPatientConfirmationEmail(email, patientName, appointmentId) {
                     </ul>
                 </div>
                 <p style="color: #7f8c8d;">Appointment Reference: ${appointmentId}</p>
-                <p>Thank you for choosing Rwanda Medical Connect!</p>
+                <p>Thank you for choosing iVUZE!</p>
                 <hr style="border: none; height: 1px; background-color: #e1e8ed; margin: 20px 0;">
                 <p style="font-size: 12px; color: #95a5a6;">This is an automated message. Please do not reply to this email.</p>
             </div>
@@ -592,7 +592,7 @@ async function sendAppointmentConfirmationEmail(email, patientName, doctorName, 
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: ' Appointment Confirmed - Rwanda Medical Connect',
+        subject: ' Appointment Confirmed - iVUZE',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #27ae60;">Appointment Confirmed!</h2>

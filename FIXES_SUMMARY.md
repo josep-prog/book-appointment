@@ -1,7 +1,7 @@
 # Project Fixes Summary
 
 ## Project Overview
-Rwanda Medical Connect - A hospital appointment booking system that allows patients to book appointments with doctors and provides a dashboard for doctors to manage appointments.
+iVUZE - A hospital appointment booking system that allows patients to book appointments with doctors and provides a dashboard for doctors to manage appointments.
 
 **Tech Stack:**
 - Frontend: Vanilla JavaScript, HTML, CSS
